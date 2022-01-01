@@ -243,10 +243,7 @@ impl WorldSnapshot {
         for registration in type_registry.iter() {
             let reflect_resource = match registration.data::<ReflectResource>() {
                 Some(res) => res,
-                None => {
-                    println!("DIDNT WORK {}", registration.name());
-                    continue;
-                }
+                None => continue, // likely this is a non-resource component, skip it.
             };
 
             match reflect_resource.reflect_resource(world) {
