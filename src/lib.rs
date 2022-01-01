@@ -27,7 +27,7 @@ where
 impl<T: 'static + SnapType> Plugin for SnapPlugin<T> {
     fn build(&self, app: &mut App) {
         app.init_resource::<SnapRegistry<T>>();
-        app.init_resource::<SnapshotIdProvider>();
+        app.init_resource::<SnapshotIdProvider<T>>();
         app.add_event::<SaveEvent<T>>();
     }
 }
