@@ -1,10 +1,13 @@
 [package]
 name = "bevy_snap"
 version = "0.1.0"
+authors = ["Johan Helsing <johanhelsing@gmail.com>"]
+description = "Saving and loading of component and resource snapshots for bevy"
+keywords = ["gamedev"]
+categories = ["game-development"]
+repository = "https://github.com/johanhelsing/bevy_snap"
 edition = "2021"
 license = "MIT OR Apache-2.0"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 bevy = { git = "https://github.com/bevyengine/bevy", branch = "main" }
