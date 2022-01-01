@@ -11,6 +11,7 @@ impl SnapType for MySnapType {
     fn add_types(registry: &mut TypeRegistry) {
         registry.write().register::<Transform>();
         registry.write().register::<dummy_game::Player>();
+        registry.write().register::<dummy_game::Steps>();
     }
 }
 

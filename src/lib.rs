@@ -3,10 +3,12 @@ use std::marker::PhantomData;
 use bevy::{prelude::*, reflect::TypeRegistry};
 
 mod commands;
+mod reflect_resource;
 mod rollback_id_provider;
 mod world_snapshot;
 
 pub use commands::*;
+pub use reflect_resource::ReflectResource;
 pub use rollback_id_provider::*;
 pub use world_snapshot::*;
 

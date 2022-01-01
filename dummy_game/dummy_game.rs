@@ -8,9 +8,14 @@ pub struct DummyGamePlugin;
 #[reflect(Component, PartialEq)]
 pub struct Player;
 
+#[derive(Component, Default, Reflect)]
+#[reflect(Component, Resource)]
+pub struct Steps(f32);
+
 impl Plugin for DummyGamePlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(ClearColor(Color::BLACK))
+            .init_resource::<Steps>()
             .add_startup_system(startup)
             .add_system(player_movement);
     }
@@ -32,7 +37,11 @@ fn startup(mut commands: Commands, mut rollback_id_provider: ResMut<RollbackIdPr
         .insert(Player);
 }
 
-fn player_movement(mut query: Query<&mut Transform, With<Player>>, keys: Res<Input<KeyCode>>) {
+fn player_movement(
+    mut query: Query<&mut Transform, With<Player>>,
+    mut steps: ResMut<Steps>,
+    keys: Res<Input<KeyCode>>,
+) {
     let mut direction = Vec2::ZERO;
     if keys.pressed(KeyCode::Right) {
         direction += Vec2::X;
@@ -46,7 +55,11 @@ fn player_movement(mut query: Query<&mut Transform, With<Player>>, keys: Res<Inp
     if keys.pressed(KeyCode::Down) {
         direction -= Vec2::Y;
     }
-    for mut transform in query.iter_mut() {
-        transform.translation += direction.extend(0.);
+    if direction != Vec2::ZERO {
+        for mut transform in query.iter_mut() {
+            transform.translation += direction.extend(0.);
+        }
+        steps.0 += direction.length();
+        info!("Distance traveled: {}", steps.0)
     }
 }
