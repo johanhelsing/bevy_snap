@@ -42,15 +42,16 @@ fn rollback_id_map(world: &mut World) -> HashMap<u32, Entity> {
 struct RollbackEntity {
     pub entity: Entity,
     pub rollback_id: u32,
-    pub components: Vec<Box<dyn Reflect>>, // TODO: needed?
+    pub components: Vec<Box<dyn Reflect>>,
 }
 
 impl Clone for RollbackEntity {
     fn clone(&self) -> Self {
-        let mut components = Vec::new();
-        for c in self.components.iter() {
-            components.push(c.clone_value());
-        }
+        let components = self
+            .components
+            .iter()
+            .map(|c| c.clone_value())
+            .collect::<Vec<_>>();
 
         Self {
             entity: self.entity.clone(),
@@ -149,7 +150,7 @@ impl WorldSnapshot {
             }
         }
 
-        // // go through all recources and clone those that are registered
+        // // go through all resources and clone those that are registered
         // for component_id in world.archetypes().resource().unique_components().indices() {
         //     let reflect_component = world
         //         .components()

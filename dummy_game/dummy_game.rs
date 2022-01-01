@@ -10,7 +10,7 @@ pub struct Player;
 
 impl Plugin for DummyGamePlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(ClearColor(Color::rgb(0.0, 0.0, 0.0)))
+        app.insert_resource(ClearColor(Color::BLACK))
             .add_startup_system(startup)
             .add_system(player_movement);
     }
