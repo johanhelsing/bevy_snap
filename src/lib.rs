@@ -4,12 +4,12 @@ use bevy::{prelude::*, reflect::TypeRegistry};
 
 mod commands;
 mod reflect_resource;
-mod rollback_id_provider;
+mod snapshot_id_provider;
 mod world_snapshot;
 
 pub use commands::*;
 pub use reflect_resource::ReflectResource;
-pub use rollback_id_provider::*;
+pub use snapshot_id_provider::*;
 pub use world_snapshot::*;
 
 pub trait SnapType: 'static + Send + Sync + Default {
@@ -27,7 +27,7 @@ where
 impl<T: 'static + SnapType> Plugin for SnapPlugin<T> {
     fn build(&self, app: &mut App) {
         app.init_resource::<SnapRegistry<T>>();
-        app.init_resource::<RollbackIdProvider>();
+        app.init_resource::<SnapshotIdProvider>();
         app.add_event::<SaveEvent<T>>();
     }
 }

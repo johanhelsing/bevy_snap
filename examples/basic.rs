@@ -51,7 +51,7 @@ fn main() {
         .run();
 }
 
-fn startup(mut commands: Commands, mut rip: ResMut<RollbackIdProvider>) {
+fn startup(mut commands: Commands, mut rip: ResMut<SnapshotIdProvider>) {
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
     commands
         .spawn_bundle(SpriteBundle {
@@ -63,7 +63,7 @@ fn startup(mut commands: Commands, mut rip: ResMut<RollbackIdProvider>) {
             ..Default::default()
         })
         // Entities that are to be saved and loaded have to be "tagged", by adding a special component
-        .insert(Rollback::<MySnap>::new(rip.next_id()))
+        .insert(SnapshotId::<MySnap>::new(rip.next_id()))
         .insert(Player);
 }
 

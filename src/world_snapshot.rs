@@ -7,17 +7,15 @@ use std::{fmt::Debug, marker::PhantomData};
 
 use crate::{reflect_resource::ReflectResource, SnapType};
 
-/// Add this component to all entities you want to be loaded/saved on rollback.
-/// The `id` has to be unique. Consider using the `RollbackIdProvider` resource.
-/// TODO: rename?
+/// Add this component to all entities you want to be loaded/saved in snapshots.
+/// The `id` has to be unique. Consider using the `SnapshotIdProvider` resource.
 #[derive(Component)]
-pub struct Rollback<T: SnapType> {
+pub struct SnapshotId<T: SnapType> {
     id: u32,
     t: PhantomData<T>,
 }
 
-impl<T: SnapType> Rollback<T> {
-    /// Creates a new rollback tag with the given id.
+impl<T: SnapType> SnapshotId<T> {
     pub fn new(id: u32) -> Self {
         Self {
             id,
@@ -25,30 +23,29 @@ impl<T: SnapType> Rollback<T> {
         }
     }
 
-    /// Returns the rollback id.
     pub fn id(&self) -> u32 {
         self.id
     }
 }
 
-/// Maps rollback_ids to entity id+generation. Necessary to track entities over time.
-fn rollback_id_map<T: SnapType>(world: &mut World) -> HashMap<u32, Entity> {
+/// Maps snapshot_ids to entity id+generation. Necessary to track entities over time.
+fn snapshot_id_map<T: SnapType>(world: &mut World) -> HashMap<u32, Entity> {
     let mut rid_map = HashMap::default();
-    let mut query = world.query::<(Entity, &Rollback<T>)>();
-    for (entity, rollback) in query.iter(world) {
-        assert!(!rid_map.contains_key(&rollback.id));
-        rid_map.insert(rollback.id, entity);
+    let mut query = world.query::<(Entity, &SnapshotId<T>)>();
+    for (entity, snapshot_id) in query.iter(world) {
+        assert!(!rid_map.contains_key(&snapshot_id.id));
+        rid_map.insert(snapshot_id.id, entity);
     }
     rid_map
 }
 
-struct RollbackEntity {
+struct SnapshotEntity {
     pub entity: Entity,
-    pub rollback_id: u32,
+    pub snapshot_id: u32,
     pub components: Vec<Box<dyn Reflect>>,
 }
 
-impl Clone for RollbackEntity {
+impl Clone for SnapshotEntity {
     fn clone(&self) -> Self {
         let components = self
             .components
@@ -58,13 +55,13 @@ impl Clone for RollbackEntity {
 
         Self {
             entity: self.entity.clone(),
-            rollback_id: self.rollback_id.clone(),
+            snapshot_id: self.snapshot_id.clone(),
             components,
         }
     }
 }
 
-impl Default for RollbackEntity {
+impl Default for SnapshotEntity {
     fn default() -> Self {
         Self {
             entity: Entity::from_raw(0),
@@ -73,22 +70,22 @@ impl Default for RollbackEntity {
     }
 }
 
-impl Debug for RollbackEntity {
+impl Debug for SnapshotEntity {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("RollbackEntity")
+        f.debug_struct("SnapshotEntity")
             .field("id", &self.entity.id())
             .field("generation", &self.entity.generation())
-            .field("rollback_id", &self.rollback_id)
+            .field("snapshot_id", &self.snapshot_id)
             .finish()
     }
 }
 
-/// Holds registered components of `Rollback` tagged entities, as well as registered resources to save and load from/to the real bevy world.
+/// Holds registered components of `SnapshotId` tagged entities, as well as registered resources to save and load from/to the real bevy world.
 /// The `checksum` is the sum of hash-values from all hashable objects. It is a sum for the checksum to be order insensitive. This of course
 /// is not the best checksum to ever exist, but it is a starting point.
 #[derive(Default, Debug)]
 pub struct WorldSnapshot<T: SnapType> {
-    entities: Vec<RollbackEntity>,
+    entities: Vec<SnapshotEntity>,
     pub resources: Vec<Box<dyn Reflect>>,
     pub checksum: u64,
     t: PhantomData<T>,
@@ -116,20 +113,20 @@ impl<T: SnapType> WorldSnapshot<T> {
         let mut snapshot = WorldSnapshot::default();
         let type_registry = type_registry.read();
 
-        // create a rollback entity for every entity tagged with rollback
+        // create a snapshot entity for every entity tagged with SnapshotId
         for archetype in world.archetypes().iter() {
             let entities_offset = snapshot.entities.len();
             for entity in archetype.entities() {
-                if let Some(rollback) = world.get::<Rollback<T>>(*entity) {
-                    snapshot.entities.push(RollbackEntity {
+                if let Some(snapshot_id) = world.get::<SnapshotId<T>>(*entity) {
+                    snapshot.entities.push(SnapshotEntity {
                         entity: *entity,
-                        rollback_id: rollback.id,
+                        snapshot_id: snapshot_id.id,
                         components: Vec::new(),
                     });
                 }
             }
 
-            // fill the component vectors of rollback entities
+            // fill the component vectors of snapshot entities
             for component_id in archetype.components() {
                 let reflect_component = world
                     .components()
@@ -140,7 +137,7 @@ impl<T: SnapType> WorldSnapshot<T> {
                     for (i, entity) in archetype
                         .entities()
                         .iter()
-                        .filter(|&&entity| world.get::<Rollback<T>>(entity).is_some())
+                        .filter(|&&entity| world.get::<SnapshotId<T>>(entity).is_some())
                         .enumerate()
                     {
                         if let Some(component) = reflect_component.reflect_component(world, *entity)
@@ -184,17 +181,17 @@ impl<T: SnapType> WorldSnapshot<T> {
 
     pub(crate) fn write_to_world(&self, world: &mut World, type_registry: TypeRegistry) {
         let type_registry = type_registry.read();
-        let mut rid_map = rollback_id_map::<T>(world);
+        let mut rid_map = snapshot_id_map::<T>(world);
 
         // first, we write all entities
-        for rollback_entity in self.entities.iter() {
+        for snapshot_entity in self.entities.iter() {
             // find the corresponding current entity or create new entity, if it doesn't exist
             let entity = *rid_map
-                .entry(rollback_entity.rollback_id)
+                .entry(snapshot_entity.snapshot_id)
                 .or_insert_with(|| {
                     world
                         .spawn()
-                        .insert(Rollback::<T>::new(rollback_entity.rollback_id))
+                        .insert(SnapshotId::<T>::new(snapshot_entity.snapshot_id))
                         .id()
                 });
 
@@ -208,7 +205,7 @@ impl<T: SnapType> WorldSnapshot<T> {
 
                 if world.entity(entity).contains_type_id(type_id) {
                     // the entity in the world has such a component
-                    match rollback_entity
+                    match snapshot_entity
                         .components
                         .iter()
                         .find(|comp| comp.type_name() == registration.name())
@@ -222,7 +219,7 @@ impl<T: SnapType> WorldSnapshot<T> {
                     }
                 } else {
                     // the entity in the world has no such component
-                    if let Some(component) = rollback_entity
+                    if let Some(component) = snapshot_entity
                         .components
                         .iter()
                         .find(|comp| comp.type_name() == registration.name())
@@ -235,10 +232,10 @@ impl<T: SnapType> WorldSnapshot<T> {
             }
 
             // afterwards, remove the pair from the map (leftover entities will need to be despawned)
-            rid_map.remove(&rollback_entity.rollback_id);
+            rid_map.remove(&snapshot_entity.snapshot_id);
         }
 
-        // despawn entities which have a rollback component but where not present in the snapshot
+        // despawn entities which have a snapshot id component but where not present in the snapshot
         for (_, v) in rid_map.iter() {
             world.despawn(*v);
         }
