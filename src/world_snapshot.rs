@@ -21,11 +21,10 @@ impl Rollback {
         Self { id }
     }
 
-    // /// Returns the rollback id.
-    //TODO: Is this actually needed ?
-    // pub const fn id(&self) -> u32 {
-    //     self.id
-    // }
+    /// Returns the rollback id.
+    pub const fn id(&self) -> u32 {
+        self.id
+    }
 }
 
 /// Maps rollback_ids to entity id+generation. Necessary to track entities over time.
@@ -107,7 +106,6 @@ impl Clone for WorldSnapshot {
 }
 
 impl WorldSnapshot {
-    // TODO: return to crate visibility?
     pub fn from_world(world: &World, type_registry: &TypeRegistry) -> Self {
         let mut snapshot = WorldSnapshot::default();
         let type_registry = type_registry.read();
