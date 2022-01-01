@@ -9,13 +9,12 @@ pub struct SaveCommand<T: SnapType> {
 
 #[derive(Default)]
 pub struct LoadCommand<T: SnapType> {
-    snapshot: WorldSnapshot,
-    t: PhantomData<T>,
+    snapshot: WorldSnapshot<T>,
 }
 
 pub trait SaveCommandExt {
     fn save<T: SnapType>(&mut self);
-    fn load<T: SnapType>(&mut self, snapshot: WorldSnapshot);
+    fn load<T: SnapType>(&mut self, snapshot: WorldSnapshot<T>);
 }
 
 impl SaveCommandExt for Commands<'_, '_> {
@@ -23,8 +22,8 @@ impl SaveCommandExt for Commands<'_, '_> {
         self.add(SaveCommand::<T>::default())
     }
 
-    fn load<T: SnapType>(&mut self, snapshot: WorldSnapshot) {
-        self.add(LoadCommand::<T> {
+    fn load<T: SnapType>(&mut self, snapshot: WorldSnapshot<T>) {
+        self.add(LoadCommand {
             snapshot,
             ..Default::default()
         })

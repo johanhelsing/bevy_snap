@@ -21,7 +21,8 @@ impl Plugin for DummyGamePlugin {
     }
 }
 
-fn startup(mut commands: Commands, mut rollback_id_provider: ResMut<RollbackIdProvider>) {
+fn startup(mut commands: Commands, 
+) {
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
 
     commands
@@ -33,11 +34,10 @@ fn startup(mut commands: Commands, mut rollback_id_provider: ResMut<RollbackIdPr
             },
             ..Default::default()
         })
-        .insert(Rollback::new(rollback_id_provider.next_id()))
         .insert(Player);
 }
 
-fn player_movement(
+pub fn player_movement(
     mut query: Query<&mut Transform, With<Player>>,
     mut steps: ResMut<Steps>,
     keys: Res<Input<KeyCode>>,

@@ -3,34 +3,38 @@ use bevy::{
     reflect::{Reflect, TypeRegistry},
     utils::HashMap,
 };
-use std::fmt::Debug;
+use std::{fmt::Debug, marker::PhantomData};
 
-use crate::reflect_resource::ReflectResource;
+use crate::{reflect_resource::ReflectResource, SnapType};
 
 /// Add this component to all entities you want to be loaded/saved on rollback.
 /// The `id` has to be unique. Consider using the `RollbackIdProvider` resource.
 /// TODO: rename?
 #[derive(Component)]
-pub struct Rollback {
+pub struct Rollback<T: SnapType> {
     id: u32,
+    t: PhantomData<T>,
 }
 
-impl Rollback {
+impl<T: SnapType> Rollback<T> {
     /// Creates a new rollback tag with the given id.
     pub fn new(id: u32) -> Self {
-        Self { id }
+        Self {
+            id,
+            t: Default::default(),
+        }
     }
 
     /// Returns the rollback id.
-    pub const fn id(&self) -> u32 {
+    pub fn id(&self) -> u32 {
         self.id
     }
 }
 
 /// Maps rollback_ids to entity id+generation. Necessary to track entities over time.
-fn rollback_id_map(world: &mut World) -> HashMap<u32, Entity> {
+fn rollback_id_map<T: SnapType>(world: &mut World) -> HashMap<u32, Entity> {
     let mut rid_map = HashMap::default();
-    let mut query = world.query::<(Entity, &Rollback)>();
+    let mut query = world.query::<(Entity, &Rollback<T>)>();
     for (entity, rollback) in query.iter(world) {
         assert!(!rid_map.contains_key(&rollback.id));
         rid_map.insert(rollback.id, entity);
@@ -83,13 +87,14 @@ impl Debug for RollbackEntity {
 /// The `checksum` is the sum of hash-values from all hashable objects. It is a sum for the checksum to be order insensitive. This of course
 /// is not the best checksum to ever exist, but it is a starting point.
 #[derive(Default, Debug)]
-pub struct WorldSnapshot {
+pub struct WorldSnapshot<T: SnapType> {
     entities: Vec<RollbackEntity>,
     pub resources: Vec<Box<dyn Reflect>>,
     pub checksum: u64,
+    t: PhantomData<T>,
 }
 
-impl Clone for WorldSnapshot {
+impl<T: SnapType> Clone for WorldSnapshot<T> {
     fn clone(&self) -> Self {
         let resources = self
             .resources
@@ -101,11 +106,12 @@ impl Clone for WorldSnapshot {
             entities: self.entities.clone(),
             resources,
             checksum: self.checksum.clone(),
+            t: Default::default(),
         }
     }
 }
 
-impl WorldSnapshot {
+impl<T: SnapType> WorldSnapshot<T> {
     pub fn from_world(world: &World, type_registry: &TypeRegistry) -> Self {
         let mut snapshot = WorldSnapshot::default();
         let type_registry = type_registry.read();
@@ -114,7 +120,7 @@ impl WorldSnapshot {
         for archetype in world.archetypes().iter() {
             let entities_offset = snapshot.entities.len();
             for entity in archetype.entities() {
-                if let Some(rollback) = world.get::<Rollback>(*entity) {
+                if let Some(rollback) = world.get::<Rollback<T>>(*entity) {
                     snapshot.entities.push(RollbackEntity {
                         entity: *entity,
                         rollback_id: rollback.id,
@@ -134,7 +140,7 @@ impl WorldSnapshot {
                     for (i, entity) in archetype
                         .entities()
                         .iter()
-                        .filter(|&&entity| world.get::<Rollback>(entity).is_some())
+                        .filter(|&&entity| world.get::<Rollback<T>>(entity).is_some())
                         .enumerate()
                     {
                         if let Some(component) = reflect_component.reflect_component(world, *entity)
@@ -178,7 +184,7 @@ impl WorldSnapshot {
 
     pub(crate) fn write_to_world(&self, world: &mut World, type_registry: TypeRegistry) {
         let type_registry = type_registry.read();
-        let mut rid_map = rollback_id_map(world);
+        let mut rid_map = rollback_id_map::<T>(world);
 
         // first, we write all entities
         for rollback_entity in self.entities.iter() {
@@ -188,9 +194,7 @@ impl WorldSnapshot {
                 .or_insert_with(|| {
                     world
                         .spawn()
-                        .insert(Rollback {
-                            id: rollback_entity.rollback_id,
-                        })
+                        .insert(Rollback::<T>::new(rollback_entity.rollback_id))
                         .id()
                 });
 

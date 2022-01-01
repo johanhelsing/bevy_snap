@@ -3,6 +3,7 @@ use bevy_snap::*;
 
 #[path = "../dummy_game/dummy_game.rs"]
 mod dummy_game;
+use dummy_game::*;
 
 #[derive(Default)]
 struct MySnapType;
@@ -16,7 +17,7 @@ impl SnapType for MySnapType {
 }
 
 #[derive(Default)]
-struct SaveSlot(WorldSnapshot);
+struct SaveSlot(WorldSnapshot<MySnapType>);
 
 fn main() {
     App::new()
@@ -25,8 +26,21 @@ fn main() {
         .add_plugin(SnapPlugin::<MySnapType>::default())
         .add_plugin(dummy_game::DummyGamePlugin)
         .add_system(save_keys)
+        .add_system(tag_player)
         .add_system(store_snapshot)
         .run();
+}
+
+fn tag_player(
+    mut commands: Commands,
+    query: Query<Entity, (With<Player>, Without<Rollback<MySnapType>>)>,
+    mut rollback_id_provider: ResMut<RollbackIdProvider>,
+) {
+    for entity in query.iter() {
+        commands
+            .entity(entity)
+            .insert(Rollback::<MySnapType>::new(rollback_id_provider.next_id()));
+    }
 }
 
 fn save_keys(mut commands: Commands, keys: Res<Input<KeyCode>>, save_slot: ResMut<SaveSlot>) {

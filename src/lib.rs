@@ -33,16 +33,12 @@ impl<T: 'static + SnapType> Plugin for SnapPlugin<T> {
 }
 
 pub struct SaveEvent<T: SnapType> {
-    pub snapshot: WorldSnapshot,
-    t: PhantomData<T>,
+    pub snapshot: WorldSnapshot<T>,
 }
 
-impl<T: SnapType> From<WorldSnapshot> for SaveEvent<T> {
-    fn from(snapshot: WorldSnapshot) -> Self {
-        Self {
-            snapshot,
-            t: PhantomData,
-        }
+impl<T: SnapType> From<WorldSnapshot<T>> for SaveEvent<T> {
+    fn from(snapshot: WorldSnapshot<T>) -> Self {
+        Self { snapshot }
     }
 }
 
