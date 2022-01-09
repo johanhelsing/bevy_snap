@@ -119,8 +119,8 @@ the above.
 
 ## Supported bevy versions
 
-Currently, bevy main is supported, but the plan is to stay with 0.6 once it's
-released.
+- 0.6
+- Bevy `main` branch in the `bevy-main` branch
 
 ## Thanks!
 
