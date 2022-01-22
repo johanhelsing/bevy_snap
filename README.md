@@ -5,10 +5,13 @@ state.
 
 Potential usages:
 
-- Save and load game state to disk
 - Rewind game mechanic
 - Undo in turn-based games
 - Rollback in networked games
+
+And once serialization is implemented:
+
+- Save and load game state to disk
 - Sync game state across networked clients
 - Easily reproduce crashes by sending saves as diagnostics
 
