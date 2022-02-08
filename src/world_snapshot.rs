@@ -54,8 +54,8 @@ impl Clone for SnapshotEntity {
             .collect::<Vec<_>>();
 
         Self {
-            entity: self.entity.clone(),
-            snapshot_id: self.snapshot_id.clone(),
+            entity: self.entity,
+            snapshot_id: self.snapshot_id,
             components,
         }
     }
