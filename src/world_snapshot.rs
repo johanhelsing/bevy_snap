@@ -198,36 +198,38 @@ impl<T: SnapType> WorldSnapshot<T> {
             // for each registered type, check what we need to do
             for registration in type_registry.iter() {
                 let type_id = registration.type_id();
-                let reflect_component = registration.data::<ReflectComponent>().expect(&format!(
-                    "Unregistered type in snapshot type registry: {:?}",
-                    registration.name()
-                ));
-
-                if world.entity(entity).contains_type_id(type_id) {
-                    // the entity in the world has such a component
-                    match snapshot_entity
-                        .components
-                        .iter()
-                        .find(|comp| comp.type_name() == registration.name())
-                    {
-                        // if we have data saved in the snapshot, overwrite the world
-                        Some(component) => {
-                            reflect_component.apply_component(world, entity, &**component)
+                if let Some(reflect_component) = registration.data::<ReflectComponent>() {
+                    if world.entity(entity).contains_type_id(type_id) {
+                        // the entity in the world has such a component
+                        match snapshot_entity
+                            .components
+                            .iter()
+                            .find(|comp| comp.type_name() == registration.name())
+                        {
+                            // if we have data saved in the snapshot, overwrite the world
+                            Some(component) => {
+                                reflect_component.apply_component(world, entity, &**component)
+                            }
+                            // if we don't have any data saved, we need to remove that component from the entity
+                            None => reflect_component.remove_component(world, entity),
                         }
-                        // if we don't have any data saved, we need to remove that component from the entity
-                        None => reflect_component.remove_component(world, entity),
+                    } else {
+                        // the entity in the world has no such component
+                        if let Some(component) = snapshot_entity
+                            .components
+                            .iter()
+                            .find(|comp| comp.type_name() == registration.name())
+                        {
+                            // if we have data saved in the snapshot, add the component to the entity
+                            reflect_component.add_component(world, entity, &**component);
+                        }
+                        // if both the snapshot and the world does not have the registered component, we don't need to to anything
                     }
                 } else {
-                    // the entity in the world has no such component
-                    if let Some(component) = snapshot_entity
-                        .components
-                        .iter()
-                        .find(|comp| comp.type_name() == registration.name())
-                    {
-                        // if we have data saved in the snapshot, add the component to the entity
-                        reflect_component.add_component(world, entity, &**component);
-                    }
-                    // if both the snapshot and the world does not have the registered component, we don't need to to anything
+                    error!(
+                        "Unrecognized type in snapshot type registry: {:?}. Did you forget to add #[reflect(Component)] to it?",
+                        registration.name()
+                    );
                 }
             }
 
