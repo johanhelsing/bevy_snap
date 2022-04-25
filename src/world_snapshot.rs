@@ -99,7 +99,7 @@ impl<T: SnapType> Clone for WorldSnapshot<T> {
         Self {
             entities: self.entities.clone(),
             resources,
-            checksum: self.checksum.clone(),
+            checksum: self.checksum,
             t: default(),
         }
     }
