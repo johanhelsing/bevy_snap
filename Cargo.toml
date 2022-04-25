@@ -1,6 +1,6 @@
 [package]
 name = "bevy_snap"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Johan Helsing <johanhelsing@gmail.com>"]
 description = "Saving and loading of component and resource snapshots for bevy"
 keywords = ["gamedev"]
@@ -10,7 +10,7 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-bevy = { version = "0.6", default-features = false }
+bevy = { version = "0.7", default-features = false }
 
 [dev-dependencies]
-bevy = { version = "0.6", default-features = false, features = ["render"] }
+bevy = { version = "0.7", default-features = false, features = ["render", "bevy_winit"] }

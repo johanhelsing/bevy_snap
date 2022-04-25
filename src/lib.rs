@@ -53,7 +53,7 @@ impl<T: SnapType> Default for SnapRegistry<T> {
         T::add_types(&mut type_registry);
         Self {
             type_registry,
-            t: Default::default(),
+            t: default(),
         }
     }
 }

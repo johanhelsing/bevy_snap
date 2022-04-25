@@ -17,10 +17,7 @@ pub struct SnapshotId<T: SnapType> {
 
 impl<T: SnapType> SnapshotId<T> {
     pub fn new(id: u32) -> Self {
-        Self {
-            id,
-            t: Default::default(),
-        }
+        Self { id, t: default() }
     }
 
     pub fn id(&self) -> u32 {
@@ -65,7 +62,7 @@ impl Default for SnapshotEntity {
     fn default() -> Self {
         Self {
             entity: Entity::from_raw(0),
-            ..Default::default()
+            ..default()
         }
     }
 }
@@ -103,7 +100,7 @@ impl<T: SnapType> Clone for WorldSnapshot<T> {
             entities: self.entities.clone(),
             resources,
             checksum: self.checksum.clone(),
-            t: Default::default(),
+            t: default(),
         }
     }
 }

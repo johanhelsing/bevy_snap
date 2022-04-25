@@ -1,4 +1,7 @@
-use bevy::{app::Events, ecs::system::Command, prelude::*};
+use bevy::{
+    ecs::{event::Events, system::Command},
+    prelude::*,
+};
 
 use crate::*;
 
@@ -23,10 +26,7 @@ impl SaveCommandExt for Commands<'_, '_> {
     }
 
     fn load<T: SnapType>(&mut self, snapshot: WorldSnapshot<T>) {
-        self.add(LoadCommand {
-            snapshot,
-            ..Default::default()
-        })
+        self.add(LoadCommand { snapshot })
     }
 }
 

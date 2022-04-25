@@ -58,9 +58,9 @@ fn startup(mut commands: Commands, mut snapshot_id_provider: ResMut<SnapshotIdPr
             sprite: Sprite {
                 color: Color::rgb(0.25, 0.25, 1.0),
                 custom_size: Some(Vec2::new(50., 50.)),
-                ..Default::default()
+                ..default()
             },
-            ..Default::default()
+            ..default()
         })
         // Entities that are to be saved and loaded have to be "tagged", by adding a special component
         .insert(snapshot_id_provider.next())

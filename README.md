@@ -122,8 +122,10 @@ the above.
 
 ## Supported bevy versions
 
-- 0.6
-- Bevy `main` branch in the `bevy-main` branch
+|bevy|bevy_pkv|
+|---|---|
+|0.7|0.2,main|
+|0.6|0.1|
 
 ## Thanks!
 
