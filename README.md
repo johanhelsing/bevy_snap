@@ -1,3 +1,13 @@
+
+## deprecation notice
+
+I'not currently working on this project or updating it to new versions of Bevy.
+
+Much of the functionality is now covered by Bevy's built-in scene functionality.
+
+For the things not covered by Bevy, there are other up-to-date community crates, like
+[bevy_save](https://github.com/hankjordan/bevy_save).
+
 # bevy_snap
 
 Bevy snap is a crate for saving and loading snapshots of entity and resource
@@ -9,7 +19,7 @@ Potential usages:
 - Undo in turn-based games
 - Rollback in networked games
 
-And once serialization is implemented:
+And if serialization is implemented:
 
 - Save and load game state to disk
 - Sync game state across networked clients
